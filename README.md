@@ -129,18 +129,27 @@ Flow installed + packet forwarded
 Include screenshots of:
 
 1. Ping results (`pingall`)
+   <img width="1139" height="643" alt="image" src="https://github.com/user-attachments/assets/ce177a7d-e184-4120-848a-a9e357d2be73" />
+
 2. Controller logs (ARP learning and flow installation)
+<img width="892" height="406" alt="image" src="https://github.com/user-attachments/assets/e48e2427-507a-4332-9ae8-8237c747148d" />
+
 3. Flow table:
 
 ```bash
 sudo ovs-ofctl dump-flows s1
 ```
+<img width="1405" height="317" alt="image" src="https://github.com/user-attachments/assets/35f7180b-17e1-4e8f-b9cb-b105d55084ef" />
+
+
 
 4. Throughput test:
 
 ```bash
 iperf h1 h2
 ```
+<img width="717" height="118" alt="image" src="https://github.com/user-attachments/assets/cb72346c-6f8e-4712-b9b7-3b5ef7fe30b8" />
+
 
 ---
 
