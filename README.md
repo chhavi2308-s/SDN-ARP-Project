@@ -100,23 +100,18 @@ Scenario 2: Subsequent Communication
 ## 📸Proof of Execution
 
 1. Ping Results
-*** Results: 0% dropped (6/6 received)
-   <img width="863" height="479" alt="image" src="https://github.com/user-attachments/assets/5dfc3457-9fc9-45a1-b705-a90969615cd8" />
+<img width="863" height="479" alt="image" src="https://github.com/user-attachments/assets/5dfc3457-9fc9-45a1-b705-a90969615cd8" />
 
 3. Controller Logs
-Learned ARP: 10.0.0.x -> xx:xx
-Flow installed
 <img width="969" height="489" alt="image" src="https://github.com/user-attachments/assets/301177c2-78cb-4ecf-a5da-95361e47beb5" />
 
 5. Flow Table
-sh ovs-ofctl dump-flows s1
 <img width="1385" height="126" alt="image" src="https://github.com/user-attachments/assets/8c1196f1-d260-45e5-8759-e8e04d0e0530" />
 
 6. Throughput Test
-iperf h1 h2
 <img width="753" height="256" alt="image" src="https://github.com/user-attachments/assets/25c441c6-3f3d-455d-a4ec-dbfe0d0d6443" />
 
-
+---
 ## 📊 Performance Analysis
 
 - Initial packets trigger controller involvement (PacketIn events)  
