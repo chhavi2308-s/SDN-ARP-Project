@@ -102,13 +102,13 @@ Scenario 2: Subsequent Communication
 1. Ping Results
 <img width="863" height="479" alt="image" src="https://github.com/user-attachments/assets/5dfc3457-9fc9-45a1-b705-a90969615cd8" />
 
-3. Controller Logs
+2. Controller Logs
 <img width="969" height="489" alt="image" src="https://github.com/user-attachments/assets/301177c2-78cb-4ecf-a5da-95361e47beb5" />
 
-5. Flow Table
+3. Flow Table
 <img width="1385" height="126" alt="image" src="https://github.com/user-attachments/assets/8c1196f1-d260-45e5-8759-e8e04d0e0530" />
 
-6. Throughput Test
+4. Throughput Test
 <img width="753" height="256" alt="image" src="https://github.com/user-attachments/assets/25c441c6-3f3d-455d-a4ec-dbfe0d0d6443" />
 
 ---
