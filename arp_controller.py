@@ -33,13 +33,19 @@ def _handle_PacketIn(event):
     if packet.dst in mac_to_port:
         out_port = mac_to_port[packet.dst]
 
-        # Install flow
+        # Install flow rule
         msg = of.ofp_flow_mod()
         msg.match.dl_dst = packet.dst
+
+        # ⭐ IMPROVEMENTS
+        msg.priority = 10
+        msg.idle_timeout = 30
+        msg.hard_timeout = 60
+
         msg.actions.append(of.ofp_action_output(port=out_port))
         event.connection.send(msg)
 
-        # Send current packet also
+        # Send current packet
         msg = of.ofp_packet_out()
         msg.data = event.ofp
         msg.actions.append(of.ofp_action_output(port=out_port))
@@ -57,4 +63,3 @@ def _handle_PacketIn(event):
 def launch():
     core.openflow.addListenerByName("PacketIn", _handle_PacketIn)
     log.info("ARP + Forwarding Controller Started")
-
