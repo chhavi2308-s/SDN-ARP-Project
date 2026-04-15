@@ -1,11 +1,22 @@
+# ============================================
+# SDN ARP Handling Controller (FULL VERSION)
+# Features:
+# - ARP Interception
+# - ARP Reply Generation (Controller-based)
+# - Host Discovery
+# - Flow Rule Installation
+# ============================================
+
 from pox.core import core
 import pox.openflow.libopenflow_01 as of
-from pox.lib.packet import arp
+from pox.lib.packet import ethernet, arp
 
 log = core.getLogger()
 
-arp_table = {}
-mac_to_port = {}
+# Tables
+arp_table = {}      # IP -> MAC
+mac_to_port = {}    # MAC -> Port
+
 
 def _handle_PacketIn(event):
     packet = event.parsed
@@ -14,36 +25,68 @@ def _handle_PacketIn(event):
     if not packet:
         return
 
-    # Learn MAC → Port
+    # Learn MAC -> Port
     mac_to_port[packet.src] = in_port
 
-    # Handle ARP
-    if packet.type == packet.ARP_TYPE:
+    # ============================================
+    # 🔹 ARP HANDLING
+    # ============================================
+    if packet.type == ethernet.ARP_TYPE:
         a = packet.payload
 
+        # Learn IP -> MAC
         arp_table[a.protosrc] = a.hwsrc
         log.info("Learned ARP: %s -> %s", a.protosrc, a.hwsrc)
 
-        if a.protodst in arp_table:
-            log.info("ARP Reply available for %s", a.protodst)
-        else:
-            log.info("Unknown destination, flooding")
+        # ========================================
+        # 🔹 IF REQUEST → GENERATE REPLY
+        # ========================================
+        if a.opcode == arp.REQUEST:
 
-    # Forwarding logic
+            if a.protodst in arp_table:
+                log.info("Generating ARP reply for %s", a.protodst)
+
+                # Create ARP reply
+                arp_reply = arp()
+                arp_reply.opcode = arp.REPLY
+                arp_reply.hwsrc = arp_table[a.protodst]   # MAC of destination
+                arp_reply.hwdst = a.hwsrc                # requester MAC
+                arp_reply.protosrc = a.protodst          # destination IP
+                arp_reply.protodst = a.protosrc          # requester IP
+
+                # Wrap in Ethernet frame
+                eth = ethernet()
+                eth.type = ethernet.ARP_TYPE
+                eth.src = arp_reply.hwsrc
+                eth.dst = arp_reply.hwdst
+                eth.payload = arp_reply
+
+                # Send reply back
+                msg = of.ofp_packet_out()
+                msg.data = eth.pack()
+                msg.actions.append(of.ofp_action_output(port=in_port))
+                event.connection.send(msg)
+
+                return
+            else:
+                log.info("Unknown ARP target, flooding")
+
+    # ============================================
+    # 🔹 NORMAL FORWARDING LOGIC
+    # ============================================
     if packet.dst in mac_to_port:
         out_port = mac_to_port[packet.dst]
 
         # Install flow rule
-        msg = of.ofp_flow_mod()
-        msg.match.dl_dst = packet.dst
+        flow = of.ofp_flow_mod()
+        flow.match.dl_dst = packet.dst
 
-        # ⭐ IMPROVEMENTS
-        msg.priority = 10
-        msg.idle_timeout = 30
-        msg.hard_timeout = 60
+        flow.priority = 10
+        flow.idle_timeout = 30
+        flow.hard_timeout = 60
 
-        msg.actions.append(of.ofp_action_output(port=out_port))
-        event.connection.send(msg)
+        flow.actions.append(of.ofp_action_output(port=out_port))
+        event.connection.send(flow)
 
         # Send current packet
         msg = of.ofp_packet_out()
@@ -54,12 +97,13 @@ def _handle_PacketIn(event):
         log.debug("Flow installed + packet forwarded")
 
     else:
-        # Flood
+        # Flood if unknown
         msg = of.ofp_packet_out()
         msg.data = event.ofp
         msg.actions.append(of.ofp_action_output(port=of.OFPP_FLOOD))
         event.connection.send(msg)
 
+
 def launch():
     core.openflow.addListenerByName("PacketIn", _handle_PacketIn)
-    log.info("ARP + Forwarding Controller Started")
+    log.info("✅ Advanced ARP Controller Started (Reply Enabled)")
