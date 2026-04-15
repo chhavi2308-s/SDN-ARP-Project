@@ -151,4 +151,12 @@ This project demonstrates how SDN enables intelligent network control by separat
 
 - Mininet Documentation  
 - POX Documentation  
-- OpenFlow Switch Specification  
+- OpenFlow Switch Specification
+
+---
+
+## Author
+
+Chhavi Siddarth Wadhwa
+
+---  
