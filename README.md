@@ -168,7 +168,7 @@ Include the following screenshots in your repository:
 
    * Learned ARP entries
    * ARP reply generation logs
-  <img width="781" height="456" alt="image" src="https://github.com/user-attachments/assets/d3e9a2ad-6dd7-464b-a5d4-6a8b96ac6a73" />
+<img width="781" height="456" alt="image" src="https://github.com/user-attachments/assets/d3e9a2ad-6dd7-464b-a5d4-6a8b96ac6a73" />
 
 
 3. **Flow Table**
@@ -178,7 +178,7 @@ Include the following screenshots in your repository:
      ```bash
      sh ovs-ofctl dump-flows s1
      ```
-     <img width="952" height="126" alt="image" src="https://github.com/user-attachments/assets/3909058a-60ea-4c47-841a-d14c7f71eed4" />
+<img width="952" height="126" alt="image" src="https://github.com/user-attachments/assets/3909058a-60ea-4c47-841a-d14c7f71eed4" />
 
 
 4. **Throughput Test (iperf)**
