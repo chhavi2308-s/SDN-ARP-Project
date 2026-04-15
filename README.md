@@ -1,162 +1,466 @@
-# SDN-Based ARP Handling using Mininet and POX
+# SDN-Based ARP Handling with Controller-Generated Replies (Mininet + POX)
 
 ---
 
 ## 📌 Problem Statement
 
-In traditional networks, Address Resolution Protocol (ARP) requests are broadcast to all hosts, causing unnecessary network flooding and inefficient bandwidth utilization.
+In traditional networks, the Address Resolution Protocol (ARP) uses broadcast communication to resolve IP addresses into MAC addresses. This leads to unnecessary network flooding, increased latency, and inefficient bandwidth usage.
 
-This project implements a Software Defined Networking (SDN) solution where a centralized controller intelligently handles ARP requests by learning IP-to-MAC mappings and reducing broadcast traffic.
+This project implements a Software Defined Networking (SDN) solution where a centralized controller intercepts ARP requests, learns host mappings, and generates ARP replies directly—reducing broadcast traffic and improving network efficiency.
 
 ---
 
-## 🎯 Objective
+## 🎯 Objectives
 
-- Demonstrate controller–switch interaction using SDN  
-- Implement ARP handling using an OpenFlow controller  
-- Design and apply match–action flow rules  
-- Observe and analyze network behavior  
+* Demonstrate controller–switch interaction using SDN
+* Intercept and process ARP packets at the controller
+* Generate ARP replies from the controller (ARP proxy behavior)
+* Implement match–action flow rules using OpenFlow
+* Enable host discovery through dynamic learning
+* Analyze network behavior and performance
 
 ---
 
 ## 🛠️ Tools & Technologies
 
-- Mininet  
-- POX Controller  
-- Open vSwitch (OVS)  
-- OpenFlow Protocol  
-- Python  
+* Mininet (Network Emulator)
+* POX Controller (Python-based SDN controller)
+* Open vSwitch (OVS)
+* OpenFlow Protocol (v1.0)
+* Python
 
 ---
 
 ## 🏗️ Network Topology
 
-Single switch topology with three hosts:
+Single-switch topology with three hosts:
 
-h1 ---\
-       \
+h1 ---
+
 h2 ---- s1
-       /
+/
 h3 ---/
+
+* 1 Switch (s1)
+* 3 Hosts (h1, h2, h3)
+* Remote SDN Controller (POX)
 
 ---
 
 ## ▶️ Execution Steps
 
-### Step 1: Start Controller
+### 1. Start POX Controller
+
+```bash
 cd ~/pox
 ./pox.py log.level --DEBUG arp_controller
+```
 
-### Step 2: Start Mininet
-sudo mn --controller=remote --topo=single,3 --switch ovs,protocols=OpenFlow10
+### 2. Start Mininet
 
-### Step 3: Test Connectivity
-pingall
+```bash
+sudo mn --controller=remote,ip=127.0.0.1 --topo=single,3 --switch ovs,protocols=OpenFlow10
+```
+
+### 3. Test Connectivity (Learning Phase)
+
+```bash
+h1 ping h2
+```
+
+### 4. Clear ARP Cache (to force ARP request again)
+
+```bash
+h1 arp -d 10.0.0.2
+```
+
+### 5. Test Again (Reply Generation Phase)
+
+```bash
+h1 ping h2
+```
+
+### 6. View Flow Table
+
+```bash
+sh ovs-ofctl dump-flows s1
+```
+
+### 7. Throughput Test
+
+```bash
+iperf
+```
 
 ---
 
 ## 🧠 Working Explanation
 
-- When a packet arrives at the switch without a matching rule, it is sent to the controller (PacketIn).
-- The controller learns:
-  - MAC → Port mapping  
-  - IP → MAC mapping (ARP table)  
-- If the destination is known:
-  - A flow rule is installed in the switch  
-  - Packet is forwarded directly  
-- If unknown:
-  - Packet is flooded  
-- After learning:
-  - Subsequent packets are handled directly by the switch  
+### 🔹 Step 1: Packet Interception
 
----
+When a switch receives a packet without a matching rule, it sends a **PacketIn** message to the controller.
 
-## 🔁 Flow Rule Design
+### 🔹 Step 2: Learning (Host Discovery)
 
-- Match: Destination MAC address (dl_dst)  
-- Action: Forward to corresponding output port  
+The controller learns:
+
+* MAC → Port mapping
+* IP → MAC mapping (ARP table)
+
+### 🔹 Step 3: ARP Request Handling
+
+* If destination IP is **unknown** → request is flooded
+* If destination IP is **known** → controller generates ARP reply
+
+### 🔹 Step 4: ARP Reply Generation (Key Feature)
+
+* Controller constructs ARP reply packet
+* Sends it directly to requester
+* Eliminates broadcast requirement
+
+### 🔹 Step 5: Flow Rule Installation
+
+* Match: Destination MAC (`dl_dst`)
+* Action: Forward to specific port
 
 Flow Parameters:
-- Priority = 10  
-- Idle Timeout = 30 seconds  
-- Hard Timeout = 60 seconds  
+
+* Priority = 10
+* Idle Timeout = 30 seconds
+* Hard Timeout = 60 seconds
+
+### 🔹 Step 6: Optimized Forwarding
+
+After learning:
+
+* Switch handles packets directly
+* Controller involvement is minimized
 
 ---
 
-## 🧪 Test Scenarios
+## 🔁 Test Scenarios
 
-Scenario 1: Initial Communication
-- ARP mapping not present  
-- Packet is flooded  
-- Controller learns mapping  
+### ✅ Scenario 1: Initial Communication
 
-Scenario 2: Subsequent Communication
-- Mapping exists  
-- No flooding  
-- Direct forwarding using flow rules  
+* ARP mapping not present
+* Packet flooded
+* Controller learns mapping
+
+### ✅ Scenario 2: Optimized Communication
+
+* ARP mapping exists
+* Controller generates ARP reply
+* No flooding occurs
+
+---
+
+## 📸 Proof of Execution
+
+Include the following screenshots in your repository:
+
+1. **Ping Results**
+
+   * Successful connectivity between hosts
+   * # SDN-Based ARP Handling with Controller-Generated Replies (Mininet + POX)
 
 ---
 
-## 📸Proof of Execution
+## 📌 Problem Statement
 
-1. Ping Results
-<img width="863" height="479" alt="image" src="https://github.com/user-attachments/assets/5dfc3457-9fc9-45a1-b705-a90969615cd8" />
+In traditional networks, the Address Resolution Protocol (ARP) uses broadcast communication to resolve IP addresses into MAC addresses. This leads to unnecessary network flooding, increased latency, and inefficient bandwidth usage.
 
-2. Controller Logs
-<img width="969" height="489" alt="image" src="https://github.com/user-attachments/assets/301177c2-78cb-4ecf-a5da-95361e47beb5" />
-
-3. Flow Table
-<img width="1385" height="126" alt="image" src="https://github.com/user-attachments/assets/8c1196f1-d260-45e5-8759-e8e04d0e0530" />
-
-4. Throughput Test
-<img width="753" height="256" alt="image" src="https://github.com/user-attachments/assets/25c441c6-3f3d-455d-a4ec-dbfe0d0d6443" />
+This project implements a Software Defined Networking (SDN) solution where a centralized controller intercepts ARP requests, learns host mappings, and generates ARP replies directly—reducing broadcast traffic and improving network efficiency.
 
 ---
+
+## 🎯 Objectives
+
+* Demonstrate controller–switch interaction using SDN
+* Intercept and process ARP packets at the controller
+* Generate ARP replies from the controller (ARP proxy behavior)
+* Implement match–action flow rules using OpenFlow
+* Enable host discovery through dynamic learning
+* Analyze network behavior and performance
+
+---
+
+## 🛠️ Tools & Technologies
+
+* Mininet (Network Emulator)
+* POX Controller (Python-based SDN controller)
+* Open vSwitch (OVS)
+* OpenFlow Protocol (v1.0)
+* Python
+
+---
+
+## 🏗️ Network Topology
+
+Single-switch topology with three hosts:
+
+h1 ---
+
+h2 ---- s1
+/
+h3 ---/
+
+* 1 Switch (s1)
+* 3 Hosts (h1, h2, h3)
+* Remote SDN Controller (POX)
+
+---
+
+## ▶️ Execution Steps
+
+### 1. Start POX Controller
+
+```bash
+cd ~/pox
+./pox.py log.level --DEBUG arp_controller
+```
+
+### 2. Start Mininet
+
+```bash
+sudo mn --controller=remote,ip=127.0.0.1 --topo=single,3 --switch ovs,protocols=OpenFlow10
+```
+
+### 3. Test Connectivity (Learning Phase)
+
+```bash
+h1 ping h2
+```
+
+### 4. Clear ARP Cache (to force ARP request again)
+
+```bash
+h1 arp -d 10.0.0.2
+```
+
+### 5. Test Again (Reply Generation Phase)
+
+```bash
+h1 ping h2
+```
+
+### 6. View Flow Table
+
+```bash
+sh ovs-ofctl dump-flows s1
+```
+
+### 7. Throughput Test
+
+```bash
+iperf
+```
+
+---
+
+## 🧠 Working Explanation
+
+### 🔹 Step 1: Packet Interception
+
+When a switch receives a packet without a matching rule, it sends a **PacketIn** message to the controller.
+
+### 🔹 Step 2: Learning (Host Discovery)
+
+The controller learns:
+
+* MAC → Port mapping
+* IP → MAC mapping (ARP table)
+
+### 🔹 Step 3: ARP Request Handling
+
+* If destination IP is **unknown** → request is flooded
+* If destination IP is **known** → controller generates ARP reply
+
+### 🔹 Step 4: ARP Reply Generation (Key Feature)
+
+* Controller constructs ARP reply packet
+* Sends it directly to requester
+* Eliminates broadcast requirement
+
+### 🔹 Step 5: Flow Rule Installation
+
+* Match: Destination MAC (`dl_dst`)
+* Action: Forward to specific port
+
+Flow Parameters:
+
+* Priority = 10
+* Idle Timeout = 30 seconds
+* Hard Timeout = 60 seconds
+
+### 🔹 Step 6: Optimized Forwarding
+
+After learning:
+
+* Switch handles packets directly
+* Controller involvement is minimized
+
+---
+
+## 🔁 Test Scenarios
+
+### ✅ Scenario 1: Initial Communication
+
+* ARP mapping not present
+* Packet flooded
+* Controller learns mapping
+
+### ✅ Scenario 2: Optimized Communication
+
+* ARP mapping exists
+* Controller generates ARP reply
+* No flooding occurs
+
+---
+
+## 📸 Proof of Execution
+
+Include the following screenshots in your repository:
+
+1. **Ping Results**
+
+   * Successful connectivity between hosts
+   * 
+
+2. **Controller Logs**
+
+   * Learned ARP entries
+   * ARP reply generation logs
+
+3. **Flow Table**
+
+   * Output of:
+
+     ```bash
+     sh ovs-ofctl dump-flows s1
+     ```
+
+4. **Throughput Test (iperf)**
+
+   * Stable data transfer performance
+
+---
+
 ## 📊 Performance Analysis
 
-- Initial packets trigger controller involvement (PacketIn events)  
-- Flow rules are dynamically installed in the switch  
-- Subsequent packets bypass the controller  
-- Reduced ARP broadcast traffic  
-- Lower latency after learning phase  
-- Stable throughput observed using iperf  
+* Initial packets trigger controller interaction (PacketIn events)
+* ARP broadcast occurs only during learning phase
+* Controller-generated ARP replies eliminate repeated broadcasts
+* Flow rules reduce controller dependency
+* Reduced latency after initial learning
+* Stable throughput observed using iperf
 
 ---
 
 ## 📈 Results
 
-- Successful controller–switch interaction  
-- Correct implementation of match–action flow rules  
-- Reduced network flooding  
-- Improved forwarding efficiency  
+* Successful controller–switch interaction
+* ARP interception and processing implemented
+* Controller-generated ARP replies achieved
+* Reduced network flooding
+* Efficient match–action flow rule execution
 
 ---
 
 ## 👨‍💻 Conclusion
 
-This project demonstrates how SDN enables intelligent network control by separating the control plane from the data plane. By handling ARP at the controller, unnecessary broadcast traffic is reduced, improving network efficiency and performance.
+This project demonstrates how SDN enables intelligent and centralized network control. By intercepting ARP packets and generating replies at the controller, the system reduces unnecessary broadcast traffic, improves efficiency, and enhances network performance.
 
 ---
 
 ## 🚀 Future Enhancements
 
-- Implement firewall rules (traffic filtering)  
-- Extend to multi-switch topology  
-- Add QoS (Quality of Service)  
-- Integrate monitoring and analytics  
+* Implement firewall (traffic filtering / blocking)
+* Extend to multi-switch topology
+* Add QoS (Quality of Service) policies
+* Integrate monitoring and analytics dashboards
 
 ---
 
 ## 📚 References
 
-- Mininet Documentation  
-- POX Documentation  
-- OpenFlow Switch Specification
+* Mininet Documentation
+* POX Controller Documentation
+* OpenFlow Switch Specification
 
 ---
 
-## Author
+## 👤 Author
 
-Chhavi Siddarth Wadhwa
+**Chhavi Siddarth Wadhwa**
 
----  
+---
+
+
+2. **Controller Logs**
+
+   * Learned ARP entries
+   * ARP reply generation logs
+
+3. **Flow Table**
+
+   * Output of:
+
+     ```bash
+     sh ovs-ofctl dump-flows s1
+     ```
+
+4. **Throughput Test (iperf)**
+
+   * Stable data transfer performance
+
+---
+
+## 📊 Performance Analysis
+
+* Initial packets trigger controller interaction (PacketIn events)
+* ARP broadcast occurs only during learning phase
+* Controller-generated ARP replies eliminate repeated broadcasts
+* Flow rules reduce controller dependency
+* Reduced latency after initial learning
+* Stable throughput observed using iperf
+
+---
+
+## 📈 Results
+
+* Successful controller–switch interaction
+* ARP interception and processing implemented
+* Controller-generated ARP replies achieved
+* Reduced network flooding
+* Efficient match–action flow rule execution
+
+---
+
+## 👨‍💻 Conclusion
+
+This project demonstrates how SDN enables intelligent and centralized network control. By intercepting ARP packets and generating replies at the controller, the system reduces unnecessary broadcast traffic, improves efficiency, and enhances network performance.
+
+---
+
+## 🚀 Future Enhancements
+
+* Implement firewall (traffic filtering / blocking)
+* Extend to multi-switch topology
+* Add QoS (Quality of Service) policies
+* Integrate monitoring and analytics dashboards
+
+---
+
+## 📚 References
+
+* Mininet Documentation
+* POX Controller Documentation
+* OpenFlow Switch Specification
+
+---
+
+## 👤 Author
+
+**Chhavi Siddarth Wadhwa**
+
+---
